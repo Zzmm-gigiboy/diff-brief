@@ -1,0 +1,23 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "diff-brief"
+version = "0.1.0"
+description = "Terminal-native git diff to PR & standup generator"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "typer>=0.9.0",
+    "rich>=13.0.0",
+    "google-genai>=0.1.0",
+    "python-dotenv>=1.0.0",
+    "pyperclip>=1.8.2",
+]
+
+[project.scripts]
+diff-brief = "diff_brief.cli:app"
+
+[tool.hatch.build.targets.wheel]
+packages = ["diff_brief"]
