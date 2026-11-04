@@ -31,6 +31,9 @@ def _maybe_copy(result: str, copy: bool) -> None:
 @app.command()
 def pr(
     copy: bool = typer.Option(False, "--copy", "-c", help="Copy result to clipboard"),
+    plain: bool = typer.Option(
+        False, "--plain", "-p", help="Output plain text without markdown rendering"
+    ),
 ) -> None:
     """Generate a clean PR description from current git diff."""
     with console.status("[bold green]Inspecting git diff..."):
@@ -49,13 +52,19 @@ def pr(
             console.print(f"[red]{exc}[/red]")
             raise typer.Exit(1) from exc
 
-    console.print(Markdown(result))
+    if plain:
+        console.print(result, highlight=False)
+    else:
+        console.print(Markdown(result))
     _maybe_copy(result, copy)
 
 
 @app.command()
 def standup(
     copy: bool = typer.Option(False, "--copy", "-c", help="Copy result to clipboard"),
+    plain: bool = typer.Option(
+        False, "--plain", "-p", help="Output plain text without markdown rendering"
+    ),
 ) -> None:
     """Generate daily standup bullets from today's commits and working diff."""
     with console.status("[bold green]Gathering daily git activity..."):
@@ -74,7 +83,10 @@ def standup(
             console.print(f"[red]{exc}[/red]")
             raise typer.Exit(1) from exc
 
-    console.print(Markdown(result))
+    if plain:
+        console.print(result, highlight=False)
+    else:
+        console.print(Markdown(result))
     _maybe_copy(result, copy)
 
 
