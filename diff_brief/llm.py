@@ -17,15 +17,19 @@ def generate_summary(content: str, system_prompt: str) -> str:
         raise ValueError("GEMINI_API_KEY environment variable is missing.")
 
     content = trim_content(content)
+    model_name = os.getenv("GEMINI_MODEL", DEFAULT_MODEL).strip() or DEFAULT_MODEL
 
-    client = genai.Client(api_key=api_key)
-    response = client.models.generate_content(
-        model=DEFAULT_MODEL,
-        contents=[
-            {
-                "role": "user",
-                "parts": [{"text": f"{system_prompt}\n\nInput:\n{content}"}],
-            }
-        ],
-    )
-    return response.text or "No response received."
+    try:
+        client = genai.Client(api_key=api_key)
+        response = client.models.generate_content(
+            model=model_name,
+            contents=[
+                {
+                    "role": "user",
+                    "parts": [{"text": f"{system_prompt}\n\nInput:\n{content}"}],
+                }
+            ],
+        )
+        return response.text or "No response received."
+    except Exception as exc:
+        raise RuntimeError(f"Gemini API request failed ({model_name}): {exc}") from exc

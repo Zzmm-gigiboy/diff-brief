@@ -6,10 +6,16 @@ MAX_DIFF_CHARS = 60_000
 
 
 def trim_content(content: str, max_chars: int = MAX_DIFF_CHARS) -> str:
-    """Truncate large diffs so LLM calls stay within a rough token budget."""
+    """Truncate large diffs at the nearest line boundary so LLM calls stay within budget."""
     if len(content) <= max_chars:
         return content
-    return content[:max_chars] + "\n\n[...diff truncated for length...]"
+
+    truncated = content[:max_chars]
+    last_newline = truncated.rfind("\n")
+    if last_newline > max_chars // 2:
+        truncated = truncated[:last_newline]
+
+    return truncated + "\n\n[...diff truncated for length...]"
 
 
 def copy_to_clipboard(text: str) -> None:

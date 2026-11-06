@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from rich.console import Console
 from rich.markdown import Markdown
 
-from diff_brief.git import get_staged_or_recent_diff, get_todays_commit_log
+from diff_brief.git import get_staged_or_recent_diff, get_todays_commit_log, is_git_repository
 from diff_brief.llm import generate_summary
 from diff_brief.prompts import PR_SYSTEM_PROMPT, STANDUP_SYSTEM_PROMPT
 from diff_brief.utils import copy_to_clipboard
@@ -36,6 +36,10 @@ def pr(
     ),
 ) -> None:
     """Generate a clean PR description from current git diff."""
+    if not is_git_repository():
+        console.print("[red]Error: Not inside a git repository.[/red]")
+        raise typer.Exit(1)
+
     with console.status("[bold green]Inspecting git diff..."):
         diff = get_staged_or_recent_diff()
 
@@ -48,7 +52,7 @@ def pr(
     with console.status("[bold cyan]Generating PR description..."):
         try:
             result = generate_summary(diff, PR_SYSTEM_PROMPT)
-        except ValueError as exc:
+        except (ValueError, RuntimeError) as exc:
             console.print(f"[red]{exc}[/red]")
             raise typer.Exit(1) from exc
 
@@ -67,6 +71,10 @@ def standup(
     ),
 ) -> None:
     """Generate daily standup bullets from today's commits and working diff."""
+    if not is_git_repository():
+        console.print("[red]Error: Not inside a git repository.[/red]")
+        raise typer.Exit(1)
+
     with console.status("[bold green]Gathering daily git activity..."):
         logs = get_todays_commit_log()
         diff = get_staged_or_recent_diff()
@@ -79,7 +87,7 @@ def standup(
     with console.status("[bold cyan]Synthesizing standup notes..."):
         try:
             result = generate_summary(combined, STANDUP_SYSTEM_PROMPT)
-        except ValueError as exc:
+        except (ValueError, RuntimeError) as exc:
             console.print(f"[red]{exc}[/red]")
             raise typer.Exit(1) from exc
 
