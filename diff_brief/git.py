@@ -21,6 +21,20 @@ def _exclude_pathspecs() -> list[str]:
     return [f":(exclude){pattern}" for pattern in IGNORED_PATTERNS]
 
 
+def is_git_repository() -> bool:
+    """Return True if current directory is inside a git working tree."""
+    try:
+        res = subprocess.run(
+            ["git", "rev-parse", "--is-inside-work-tree"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        return res.returncode == 0 and res.stdout.strip() == "true"
+    except FileNotFoundError:
+        return False
+
+
 def run_git_command(args: list[str]) -> str:
     try:
         result = subprocess.run(
@@ -52,8 +66,13 @@ def get_staged_or_recent_diff() -> str:
     if diff:
         return diff
 
-    # 3. Fall back to previous commit
-    return run_git_command(["diff", "HEAD~1", "--", ".", *excludes])
+    # 3. Fall back to previous commit, or initial commit if no parent exists
+    has_parent = run_git_command(["rev-parse", "--verify", "--quiet", "HEAD~1"])
+    if has_parent:
+        return run_git_command(["diff", "HEAD~1", "--", ".", *excludes])
+
+    # Single commit repository fallback (initial commit)
+    return run_git_command(["show", "--format=", "--", ".", *excludes])
 
 
 def get_todays_commit_log() -> str:
